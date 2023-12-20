@@ -1,59 +1,23 @@
 #!/usr/bin/python3
-"""Script to retrieve TODO list progress for a given employee
-ID using REST API and export data in CSV format
-"""
-import requests
+"""Gathering the needed informations from the API."""
 import csv
-import sys
+import json
+import requests
+from sys import argv
 
-def export_to_csv(employee_id, user_data, todos_data):
-    file_name = f"{employee_id}.csv"
+if __name__ == '__main__':
+    resp_users = requests.get('https://jsonplaceholder.typicode.com/users')
+    resp_todos = requests.get('https://jsonplaceholder.typicode.com/todos')
 
-    with open(file_name, mode='w', newline='') as csv_file:
-        fieldnames = ["USER_ID", "USERNAME", "TASK_COMPLETED_STATUS", "TASK_TITLE"]
-        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+    user_id = argv[1]
 
-        writer.writeheader()
-        for task in todos_data:
-            writer.writerow({
-                "USER_ID": employee_id,
-                "USERNAME": user_data['username'],
-                "TASK_COMPLETED_STATUS": str(task['completed']),
-                "TASK_TITLE": task['title']
-            })
-
-    print(f"Data exported to {file_name}")
-
-if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python3 script.py <employee_id>")
-        sys.exit(1)
-
-    employee_id = int(sys.argv[1])
-    api_url = "https://jsonplaceholder.typicode.com"
-
-    try:
-        user_response = requests.get(f"{api_url}/users/{employee_id}")
-        user_response.raise_for_status()
-        user_data = user_response.json()
-
-        todos_response = requests.get(f"{api_url}/todos?userId={employee_id}")
-        todos_response.raise_for_status()
-        todos_data = todos_response.json()
-
-        total_tasks = len(todos_data)
-        done_tasks = [task for task in todos_data if task['completed']]
-        total_done_tasks = len(done_tasks)
-
-        print(
-            f"Employee {user_data['name']} is done with tasks({total_done_tasks}/{total_tasks}):"
-        )
-
-        for task in done_tasks:
-            print(f"\t{task['title']}")
-
-        export_to_csv(employee_id, user_data, todos_data)
-
-    except requests.RequestException as e:
-        print(f"Error: {e}")
-        sys.exit(1)
+    for i in resp_users.json():
+        if i['id'] == int(user_id):
+            user_name = i['username']
+    with open(f'{user_id}.csv', 'w') as f:
+        for i in resp_todos.json():
+            if i['userId'] == int(user_id):
+                task = i['completed']
+                title = i['title']
+                f.write(
+                    f"\"{argv[1]}\",\"{user_name}\",\"{task}\",\"{title}\"\n")
