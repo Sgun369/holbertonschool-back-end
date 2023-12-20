@@ -21,3 +21,4 @@ if __name__ == '__main__':
                 title = i['title']
                 f.write(
                     f"\"{argv[1]}\",\"{user_name}\",\"{task}\",\"{title}\"\n")
+                
